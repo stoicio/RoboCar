@@ -14,4 +14,4 @@
 # limitations under the License.
 # ==============================================================================
 
-jupyter notebook --allow-root
+jupyter notebook --allow-root "$@"

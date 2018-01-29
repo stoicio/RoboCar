@@ -1,0 +1,36 @@
+version: '2.0'
+
+services:
+  tensor:
+    devices: 
+        - /dev/nvidiactl
+        - /dev/nvidia-uvm
+        - /dev/nvidia0 
+    image: gcr.io/tensorflow/tensorflow:latest-gpu-py3
+    volumes:
+        - .:/usr/src/app
+        - nvidia_driver_384.111:/usr/local/nvidia:ro
+    container_name: tensorflow_container
+    command: bash
+    working_dir: /usr/src/app
+
+  keras:
+    devices: 
+      - /dev/nvidiactl
+      - /dev/nvidia-uvm
+      - /dev/nvidia0 
+    build:
+      context: .
+      dockerfile: ./dockerfiles/keras
+    image: carnd:keras
+    depends_on:
+      - tensor
+    volumes:
+      - .:/usr/src/app
+      - nvidia_driver_384.111:/usr/local/nvidia:ro
+    container_name: keras_container
+
+volumes:
+  media: null
+  nvidia_driver_384.111:
+    external: true
