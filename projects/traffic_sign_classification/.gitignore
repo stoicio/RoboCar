@@ -1,0 +1,11 @@
+data
+.ipynb_checkpoints
+*.h5
+models
+*.swp
+*.p
+pickled_data
+lenet*
+sermanet*
+*.zip
+checkpoint
