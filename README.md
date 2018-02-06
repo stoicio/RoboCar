@@ -1,4 +1,4 @@
-# Code & Python notebooks working through a Deep Learning Course
+# Code & Python notebooks working through Udacity's Self Driving Car course
 
 ### Enviroment Setup:
 * Install [docker](www.docker.com) & [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)
