@@ -8,3 +8,6 @@
     - I have tried using [docker-compose](docker-compose.yml) to get rid of this command, but have had no luck running it on my own system so far.
     - bash aliases have helped.
 * Open a ipython notebook run `./run_jupyter.sh` or  `./run_jupyter.sh <path_to_notebook>` to open a specific notebook
+
+### Untested files:
+* `docker-compose.yml` - Haven't been able to get create a volume using nvidia-docker command required to use docker-compose to launch images.

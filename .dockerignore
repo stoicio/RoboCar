@@ -1,3 +1,31 @@
 # Data
-notMNIST.pickle
-*.zip
+**/*.pickle
+**/*.zip
+**/*.p
+**/*.npy
+data/
+models
+bottleneck_data/
+
+
+# Git
+.git
+.gitignore
+
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+*.py[cod]
+*/*.py[cod]
+*/*/*.py[cod]
+*/*/*/*.py[cod]
+
+# Docker
+docker-compose.yml
+.docker
+
+# IPython Notebook
+**/*.ipynb_checkpoints
