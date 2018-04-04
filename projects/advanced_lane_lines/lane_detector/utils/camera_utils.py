@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -28,28 +29,55 @@ class CameraCalibration(object):
             raise RuntimeError("No chessboard images found")
         return full_image_paths
 
-    def __init__(self, n_cols, n_rows, chessboard_img_dir, store_output_images=False):
+    
+    def __init__(self, n_cols=None, n_rows=None, chessboard_img_dir=None,
+                 params_load_path=None, store_output_images=False,):
         '''
         Args:
             n_cols (int) : Number of corners along horizontal axis
             n_rows (int) : Number of corners along vertical axis
             chessboard_img_dir (str) : directory where the chessboard images are stored
         '''
+        if params_load_path:
+            self.load_params_from_file(params_load_path)
+            logger.info('Camera params loaded and ready to use')
+            return
+        
+        if not all([n_cols, n_rows, chessboard_img_dir]):
+            raise ValueError('Pass in chess board params and location to images')
+        
+        
         self.images_dir = chessboard_img_dir
         self.image_paths = self.get_image_paths(chessboard_img_dir)
         self.pattern_size = (n_cols, n_rows)
 
         self.mtx = None
         self.dist = None
-        self.rvecs = None
-        self.tvecs = None
 
         self.output_images_path = []
         self.failed_images = []
         self.__is_calibrated = False
         self.__store_output_images = store_output_images
-
         self.__calibrate_camera()
+
+    def load_params_from_file(self, json_file_path):
+        expected_keys = ['mtx', 'dist']
+        with open(json_file_path, 'r') as fp:
+            data = json.load(fp)
+        if not all([k in data.keys() for k in expected_keys]):
+            raise ValueError('Cannot load camera params. Use a different file or recalibrate')
+        self.mtx = np.array(data['mtx'])
+        self.dist = np.array(data['dist'])
+        self.__is_calibrated = True
+    
+    def save_params_to_file(self, file_path):
+        data = {
+            'mtx': self.mtx.tolist(),
+            'dist': self.dist.tolist()
+        }
+        with open(file_path, 'w') as fp:
+            json.dump(data, fp)
+
 
     def __calibrate_camera(self):
 
@@ -97,8 +125,8 @@ class CameraCalibration(object):
                 logger.debug("Failed to find chessboard in {name}".format(name=image))
                 self.failed_images.append(image)
 
-        (success, self.mtx, self.dist, self.rvecs, self.tvecs) = cv2.calibrateCamera(
-            chessboard_corners_3d, image_points_2d, gray.shape[::-1], None, None)
+        (success, self.mtx, self.dist, _, _) = cv2.calibrateCamera(chessboard_corners_3d,
+            image_points_2d, gray.shape[::-1], None, None)
 
         if not success:
             raise RuntimeError("Calibration failed ! Retry with better chessboard images")
@@ -111,7 +139,7 @@ class CameraCalibration(object):
     def get_camera_params(self, redo_calibration=False):
         if not self.__is_calibrated or redo_calibration:
             self.__calibrate_camera()
-        return (self.mtx, self.dist, self.rvecs, self.tvecs)
+        return (self.mtx, self.dist)
 
     def get_processed_images(self):
         '''Returns a list of chessboard images with corners drawn and a list of images
