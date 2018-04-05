@@ -39,9 +39,14 @@ class CameraCalibration(object):
             chessboard_img_dir (str) : directory where the chessboard images are stored
         '''
         if params_load_path:
-            self.load_params_from_file(params_load_path)
-            logger.info('Camera params loaded and ready to use')
+            if os.path.exists(params_load_path):
+                self.load_params_from_file(params_load_path)
+                logger.info('Camera params loaded and ready to use')
+            else:
+                logger.error('Cannot load params from file. Please recalibrate')
+                raise ValueError('Cannot load params from file. Please recalibrate')
             return
+    
         
         if not all([n_cols, n_rows, chessboard_img_dir]):
             raise ValueError('Pass in chess board params and location to images')

@@ -6,32 +6,62 @@ import os
 import sys
 
 from .utils import CameraCalibration, LaneDetector, PerspectiveTransformation
+from .utils import fs_utils
+
+DATA_ZIP = 'https://s3-us-west-1.amazonaws.com/carnd-data/advanced_lane_lines_data.zip'
+BASE_DOWNLOAD_DIR = './data/'
+TEST_DATA_ZIP = './data/advanced_lane_lines_data.zip'
 
 # Location to find camera parameters
-CAMERA_OUTPUT_PARAMS_FILE = './camera_cal/output_params.json'
+CAMERA_OUTPUT_PARAMS_FILE = os.path.join(BASE_DOWNLOAD_DIR, 'camera_cal/output_params.json')
 
 # Chess board settings
 CHESS_BOARD_COLS = 9
 CHESS_BOARD_ROWS = 6
-CHESS_BOARD_IMAGES_PATH = './camera_cal'
+CHESS_BOARD_IMAGES_PATH = os.path.join(BASE_DOWNLOAD_DIR, 'camera_cal/')
 
 # TEST IMAGES PATH
-TEST_IMAGES_DIR = './test_images'
-OUTPUT_IMAGES_DIR = './output_images'
+TEST_IMAGES_DIR = os.path.join(BASE_DOWNLOAD_DIR, 'test_images/')
+OUTPUT_IMAGES_DIR = os.path.join(BASE_DOWNLOAD_DIR, 'output_images/')
 
 # VIDEO CLIP PATH
-PROJECT_VIDEO = './project_video.mp4'
-PROJECT_VIDEO_OUTPUT_DIR = './output_videos'
+PROJECT_VIDEO = os.path.join(BASE_DOWNLOAD_DIR, 'project_video.mp4')
+PROJECT_VIDEO_OUTPUT_DIR = os.path.join(BASE_DOWNLOAD_DIR, 'output_videos/')
 
-if not os.path.exists(OUTPUT_IMAGES_DIR):
-    os.makedirs(OUTPUT_IMAGES_DIR)
 
-if not os.path.exists(PROJECT_VIDEO_OUTPUT_DIR):
-    os.makedirs(PROJECT_VIDEO_OUTPUT_DIR)
+def init_data():
+    ''' 
+    Initializes data required for the project.
+    1. Downloads test data. 2. Runs camera calibration & Returns calibration object
+    '''
+
+    try:
+        if not os.path.exists(TEST_DATA_ZIP):
+            fs_utils.download_file(DATA_ZIP, BASE_DOWNLOAD_DIR)
+            fs_utils.extract_zip(TEST_DATA_ZIP, BASE_DOWNLOAD_DIR)
+    except Exception:
+        # Clean up partial files
+        if os.path.exists(TEST_DATA_ZIP):
+            os.remove(TEST_DATA_ZIP)
+        raise
+
+    if not os.path.exists(OUTPUT_IMAGES_DIR):
+        os.makedirs(OUTPUT_IMAGES_DIR)
+
+    if not os.path.exists(PROJECT_VIDEO_OUTPUT_DIR):
+        os.makedirs(PROJECT_VIDEO_OUTPUT_DIR)
+
+    cc = None
+    try:
+        cc = CameraCalibration(params_load_path=CAMERA_OUTPUT_PARAMS_FILE)
+    except ValueError:
+        cc = CameraCalibration(CHESS_BOARD_COLS, CHESS_BOARD_ROWS, CHESS_BOARD_IMAGES_PATH)
+    return cc
 
 
 def process_pictures():
-    cc = CameraCalibration(params_load_path=CAMERA_OUTPUT_PARAMS_FILE)
+
+    cc = init_data()    
     mtx, dist = cc.get_camera_params()
     pp = PerspectiveTransformation()
     detector = LaneDetector(cc, pp, process_stream=False)
@@ -46,7 +76,8 @@ def process_pictures():
 
 
 def process_video():
-    cc = CameraCalibration(params_load_path=CAMERA_OUTPUT_PARAMS_FILE)
+
+    cc = init_data()
     mtx, dist = cc.get_camera_params()
     pp = PerspectiveTransformation()
     detector = LaneDetector(cc, pp, process_stream=True)
