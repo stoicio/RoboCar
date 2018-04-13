@@ -7,6 +7,8 @@
 set -e
 . activate carnd-term1
 
+jupyter nbextension enable --py --sys-prefix widgetsnbextension
+
 if [ -z "$1" ]
   then
     jupyter notebook --allow-root

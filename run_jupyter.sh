@@ -14,4 +14,5 @@
 # limitations under the License.
 # ==============================================================================
 
+jupyter nbextension enable --py --sys-prefix widgetsnbextension
 jupyter notebook --allow-root "$@"
