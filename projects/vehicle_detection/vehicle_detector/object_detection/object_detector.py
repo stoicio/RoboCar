@@ -1,11 +1,15 @@
+from collections import deque
+
+import cv2
 import numpy as np
+from scipy.ndimage.measurements import label
 from vehicle_detector.descriptors import color_hist
 from vehicle_detector.utils import image_utils
 
-
 class ObjectDetector:
     def __init__(self, model, feature_scaler, hog_descriptor, color_hist,
-                 hog_cspace='BGR', ystart=None, ystop=None, window_dim=(64, 64)):
+                 hog_cspace='BGR', ystart=None, ystop=None, window_dim=(64, 64),
+                 is_stream=False):
         # Initialize with classifier and options for feature extraction
         self.model = model  # Classifier
         self.scaler = feature_scaler  # Sklearn standard scaler
@@ -22,6 +26,12 @@ class ObjectDetector:
         self.pixels_per_cell = self.hog.pix_per_cell[0]
         self.cells_per_block = self.hog.cells_per_block[0]
 
+        # Are we processing a video sequence
+        self.is_stream = is_stream
+        self.weights = [0.1, 0.2, 0.4, 0.6, 0.8]
+        self.last_5_heatmaps = deque(maxlen=5)
+
+
     def detect(self, image, scales=[1., 1.25, 1.5, 1.75, 2.0]):
         boxes = []
         probs = []
@@ -32,8 +42,7 @@ class ObjectDetector:
             probs.extend(this_probs)
         return boxes, probs
 
-    # Define a single function that can extract features using hog sub-sampling and make predictions
-    def find_cars(self, image, scale=1.0, min_prob=0.8):
+    def find_cars(self, image, scale=1.0, min_prob=0.75):  # flake8:noqa
         # initialize the list of bounding boxes and associated probabilities
         boxes = []
         probs = []
@@ -109,3 +118,73 @@ class ObjectDetector:
                                   xbox_left + win_draw, ytop_draw + win_draw + self.ystart))
                     probs.append(probability)
         return boxes, probs
+
+    def add_heat(self, heatmap, bbox_list):
+        # Iterate through list of bboxes
+        for box in bbox_list:
+            # Add += 1 for all pixels inside each bbox
+            # Assuming each "box" takes the form ((x1, y1), (x2, y2))
+            heatmap[box[1]:box[3], box[0]:box[2]] += 1
+
+        # Return updated heatmap
+        return heatmap  # Iterate through list of bboxes
+
+    def label_cars(self, heatmap, threshold=0):
+        # Zero out pixels below the threshold
+        heatmap[heatmap <= threshold] = 0
+        labels, n_cars = label(heatmap)
+        return labels, n_cars
+
+    def draw_labeled_bboxes(self, img, labels, n_cars):
+        # Iterate through all detected cars
+        bboxes = []
+        for car_number in range(1, n_cars + 1):
+            # Find pixels with each car_number label value
+            nonzero = (labels == car_number).nonzero()
+            # Identify x and y values of those pixels
+            nonzeroy = np.array(nonzero[0])
+            nonzerox = np.array(nonzero[1])
+            # Define a bounding box based on min/max x and y
+            bboxes.append((np.min(nonzerox), np.min(nonzeroy),
+                            np.max(nonzerox), np.max(nonzeroy)))
+        # Draw the boxes on the image
+        return image_utils.draw_boxes(img, bboxes, (0, 200, 200), 6)
+
+    def blend_heatmap(self, image, heatmap):
+        """Combine the image with the heatmap for the final video frames."""
+        
+        
+        heatmap = image_utils.resize(heatmap, width=640, height=360)
+        mn = np.min(heatmap)
+        mx = np.max(heatmap)
+        
+        heatmap = np.uint8((heatmap - mn) * 255 / (mx - mn))
+        heatmap_rgb = np.dstack((np.zeros_like(heatmap), heatmap, heatmap))
+        
+        overlay = np.copy(image)
+        overlay[0:360, 0:640, :] = heatmap_rgb
+                
+        blended_image = cv2.addWeighted(image, 0.5, overlay, 0.5, 0)
+        cv2.putText(blended_image, 'Detections Heat Map', (200, 330),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+        
+        return blended_image
+
+    def process_image(self, image):
+        
+        heatmap_threshold = 0
+        draw_img = np.copy(image)
+        bboxes, _ = self.detect(image)
+        
+        heatmap = np.zeros_like(image[:, :, 0]).astype(np.float)
+        heatmap = self.add_heat(heatmap, bboxes)
+
+        labels, n_cars = self.label_cars(heatmap, threshold=heatmap_threshold)
+        boxes_img = self.draw_labeled_bboxes(draw_img, labels, n_cars)
+        blended_image = self.blend_heatmap(boxes_img, heatmap)
+
+        return blended_image
+
+    def process_frame(self, image):
+        if not self.is_stream:
+            return self.process_image(image)
