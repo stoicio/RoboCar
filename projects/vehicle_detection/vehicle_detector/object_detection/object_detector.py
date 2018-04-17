@@ -17,12 +17,28 @@ class ObjectDetector:
         self.ystop = ystop
         self.window_dim = window_dim
 
-    def detect(self, image, pyramid_scale=1.5, min_prob=0.7):
+        # Store hog_descriptor params
+        self.orientations = self.hog.orient
+        self.pixels_per_cell = self.hog.pix_per_cell[0]
+        self.cells_per_block = self.hog.cells_per_block[0]
+
+    def detect(self, image, scales=[1., 1.25, 1.5, 1.75, 2.0]):
+        boxes = []
+        probs = []
+
+        for scale in scales:
+            this_boxes, this_probs = self.find_cars(image, scale)
+            boxes.extend(this_boxes)
+            probs.extend(this_probs)
+        return boxes, probs
+
+    # Define a single function that can extract features using hog sub-sampling and make predictions
+    def find_cars(self, image, scale=1.0, min_prob=0.8):
         # initialize the list of bounding boxes and associated probabilities
         boxes = []
         probs = []
 
-        if not self.ystart: 
+        if not self.ystart:
             self.ystart = 0
 
         if not self.ystop:
@@ -30,65 +46,66 @@ class ObjectDetector:
 
         img_tosearch = image[self.ystart:self.ystop, :, :]
 
-        # loop over the image pyramid
-        for layer in image_utils.pyramid(img_tosearch, scale=pyramid_scale,
-                                         min_size=self.window_dim):
-            # determine the current scale of the pyramid
-            scale = img_tosearch.shape[0] / float(layer.shape[0])
-            # loop over the sliding windows for the current pyramid layer
-            for (x, y, window) in image_utils.sliding_window(layer, self.window_dim):
-                # grab the dimensions of the window
-                (winH, winW) = window.shape[:2]
-
-                # ensure the window dimensions match the supplied sliding window dimensions
-                if winH == self.window_dim[1] and winW == self.window_dim[0]:
-                    # extract HOG features from the current window and classifiy whether or
-                    # not this window contains an object we are interested in
-                    features = self.extract_features(window).reshape(1, -1)
-                    scaled_features = self.scaler.transform(features)
-                    predict = self.model.predict(scaled_features) #_proba(scaled_features)[0][1]
-                    
-                    # check to see if the classifier has found an object with sufficient
-                    # probability
-                    if predict == 1:
-                        # compute the (x, y)-coordinates of the bounding box using the current
-                        # scale of the image pyramid
-                        (startx, starty) = (int(scale * x), int(scale * y))
-                        end_x = int(startx + (scale * winW))
-                        end_y = int(starty + (scale * winH))
-
-                        # update the list of bounding boxes and probabilities
-                        boxes.append((startx, starty + self.ystart, end_x, end_y + self.ystart))
-                        probs.append(predict)
-
-        # return a tuple of the bounding boxes and probabilities
-        return (boxes, probs)
-
-    def extract_features(self, img):
-        '''
-        Given an image and options, extract the features and return a feature vector
-        Args:
-        img (np.array)  : Single or multichannel image
-        use_color_hist (bool) : Set to True, to extract color histogram of each channel
-        hog_cspace (str): String describing the color space to use to extract HOG features
-        Returns:
-        1D Feature vector describing the image
-        '''
-        win_size = self.window_dim[0]
-        if img.shape[0] != win_size or img.shape[1] != win_size:
-            img = image_utils.resize(img, win_size, win_size)
-
-        color_features = []
-
-        if self.extract_color_hist and len(img.shape) > 2:
-            color_features = color_hist(img, nbins=32)
-
+        ctrans_tosearch = img_tosearch
         if self.hog_cspace != 'BGR':
-            img = image_utils.convert_color(img, self.hog_cspace)
+            ctrans_tosearch = image_utils.convert_color(img_tosearch, conv=self.hog_cspace)
 
-        hog_features = self.hog.get_features(img, feature_vec=True)
+        if scale != 1:
+            imshape = ctrans_tosearch.shape
+            ctrans_tosearch = image_utils.resize(ctrans_tosearch, width=np.int(imshape[1] / scale),
+                                                 height=np.int(imshape[0] / scale))
 
-        if len(img.shape) > 2:  # If multichannel image, concatenate all channel's features
-            hog_features = np.concatenate((hog_features[0], hog_features[1], hog_features[2]))
+        # Define blocks and steps as above
+        nxblocks = (ctrans_tosearch.shape[1] // self.pixels_per_cell) - self.cells_per_block + 1
+        nyblocks = (ctrans_tosearch.shape[0] // self.pixels_per_cell) - self.cells_per_block + 1
 
-        return np.concatenate((hog_features, color_features))
+        # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
+        window = 64  # TODO Assert if window dims are divisible by pixels/cell and cells/block
+        nblocks_per_window = (window // self.pixels_per_cell) - self.cells_per_block + 1
+        cells_per_step = 2  # Instead of overlap, define how many cells to step
+        nxsteps = (nxblocks - nblocks_per_window) // cells_per_step + 1
+        nysteps = (nyblocks - nblocks_per_window) // cells_per_step + 1
+
+        # Compute individual channel HOG features for the entire image
+        (hog1, hog2, hog3) = self.hog.get_features(ctrans_tosearch, feature_vec=False)
+
+        for xb in range(nxsteps):
+            for yb in range(nysteps):
+                ypos = yb * cells_per_step
+                xpos = xb * cells_per_step
+                # Extract HOG for this patch
+                hog_feat1 = hog1[ypos:ypos + nblocks_per_window,
+                                 xpos:xpos + nblocks_per_window].ravel()
+                hog_feat2 = hog2[ypos:ypos + nblocks_per_window,
+                                 xpos:xpos + nblocks_per_window].ravel()
+                hog_feat3 = hog3[ypos:ypos + nblocks_per_window,
+                                 xpos:xpos + nblocks_per_window].ravel()
+                hog_features = np.concatenate((hog_feat1, hog_feat2, hog_feat3))
+
+                xleft = xpos * self.pixels_per_cell
+                ytop = ypos * self.pixels_per_cell
+
+                # Extract the image patch
+                image_patch = ctrans_tosearch[ytop:ytop + window, xleft:xleft + window]
+                subimg = image_utils.resize(image_patch, width=64, height=64)
+
+                # Get color features
+                color_features = []
+                if self.extract_color_hist:
+                    color_features = color_hist(subimg)
+
+                features = np.concatenate((hog_features, color_features)).reshape(1, -1)
+
+                # Scale features and make a prediction
+                test_features = self.scaler.transform(features).reshape(1, -1)
+                # Get probability for  1st label, Car in this case
+                probability = self.model.predict_proba(test_features)[0][1] 
+
+                if probability >= min_prob:
+                    xbox_left = np.int(xleft * scale)
+                    ytop_draw = np.int(ytop * scale)
+                    win_draw = np.int(window * scale)
+                    boxes.append((xbox_left, ytop_draw + self.ystart,
+                                  xbox_left + win_draw, ytop_draw + win_draw + self.ystart))
+                    probs.append(probability)
+        return boxes, probs

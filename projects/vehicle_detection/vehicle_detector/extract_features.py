@@ -21,11 +21,12 @@ def extract_features(img, use_color_hist, hog_descriptor, hog_cspace):
      1D Feature vector describing the image
     '''
     color_features = []
-    if use_color_hist and len(img.shape) > 2:
-        color_features = color_hist(img, nbins=32)
 
     if hog_cspace != 'BGR':
         img = image_utils.convert_color(img, hog_cspace)
+
+    if use_color_hist and len(img.shape) > 2:
+        color_features = color_hist(img, nbins=32)
 
     hog_features = hog_descriptor.get_features(img, feature_vec=True)
 
@@ -53,7 +54,7 @@ def get_feature_vectors(image_paths, use_color_hist, orients, n_pixels, n_cells,
     # Create HOG Descriptor with given parameters
     hog_descriptor = HOG(orients, n_pixels, n_cells)
 
-    for img_path in tqdm(image_paths, desc='Extracting features', unit='images'):
+    for img_path in tqdm(image_paths, desc='Extracting features', unit='images', leave=False):
 
         img = cv2.imread(img_path)
 
