@@ -23,6 +23,8 @@ def convert_color(img, conv='RGB2YCrCb'):  # flake8: noqa
         return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     if conv == 'RGB2BGR':
         return cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    if conv == 'BGR2RGB':
+        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     raise ValueError('Conversion flag for color space %s not defined' % conv)
 
 

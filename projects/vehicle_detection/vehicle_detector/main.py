@@ -41,8 +41,8 @@ def init_detector(is_stream=False):
     hog_descriptor = HOG(params['orientations'], params['pixels_per_cell'],
                          params['cells_per_block'])
     detector = ObjectDetector(clf, scaler, hog_descriptor, params['color_hist'],
-                              params['hog_color_space'], ystart=400, ystop=650,
-                              is_stream=False)
+                              params['hog_color_space'], ystart=350, ystop=650,
+                              is_stream=is_stream)
     return detector
 
 
@@ -65,7 +65,7 @@ def process_pictures():
         cv2.imwrite(image_name, final_image)
 
 
-def process_video(video=None):
+def process_video(video=None, tstart=None, tend=None):
     detector = init_detector(is_stream=True)
 
     if not os.path.exists(PROJECT_VIDEO_OUTPUT_DIR):
@@ -76,8 +76,10 @@ def process_video(video=None):
     output_video_path = os.path.join(PROJECT_VIDEO_OUTPUT_DIR,
                                      os.path.basename(video))
     clip = VideoFileClip(video, audio=False)
-    subclip = clip.subclip(37, 40)
-    output_clip = subclip.fl_image(lambda x: detector.process_frame(x))
+    if tstart and tend:
+        clip = clip.subclip(tstart, tend)
+
+    output_clip = clip.fl_image(lambda x: detector.process_frame(x))
     output_clip.write_videofile(output_video_path)
 
 

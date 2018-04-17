@@ -1,4 +1,5 @@
 from collections import deque
+import logging
 
 import cv2
 import numpy as np
@@ -6,10 +7,12 @@ from scipy.ndimage.measurements import label
 from vehicle_detector.descriptors import color_hist
 from vehicle_detector.utils import image_utils
 
+logger = logging.getLogger(__name__.upper())
+
 class ObjectDetector:
     def __init__(self, model, feature_scaler, hog_descriptor, color_hist,
                  hog_cspace='BGR', ystart=None, ystop=None, window_dim=(64, 64),
-                 is_stream=False):
+                 is_stream=False, xstart=400):
         # Initialize with classifier and options for feature extraction
         self.model = model  # Classifier
         self.scaler = feature_scaler  # Sklearn standard scaler
@@ -29,10 +32,10 @@ class ObjectDetector:
         # Are we processing a video sequence
         self.is_stream = is_stream
         self.weights = [0.1, 0.2, 0.4, 0.6, 0.8]
-        self.last_5_heatmaps = deque(maxlen=5)
+        self.last_5_heatmaps = deque(maxlen=24)
+        self.count = 0
 
-
-    def detect(self, image, scales=[1., 1.25, 1.5, 1.75, 2.0]):
+    def detect(self, image, scales=[1., 1.1, 1.25, 1.5, 1.75, 2.0]):
         boxes = []
         probs = []
 
@@ -42,7 +45,7 @@ class ObjectDetector:
             probs.extend(this_probs)
         return boxes, probs
 
-    def find_cars(self, image, scale=1.0, min_prob=0.75):  # flake8:noqa
+    def find_cars(self, image, scale=1.0, min_prob=0.65):  # flake8:noqa
         # initialize the list of bounding boxes and associated probabilities
         boxes = []
         probs = []
@@ -119,21 +122,15 @@ class ObjectDetector:
                     probs.append(probability)
         return boxes, probs
 
-    def add_heat(self, heatmap, bbox_list):
+    def add_heat(self, heatmap, bbox_list, threshold=0):
         # Iterate through list of bboxes
         for box in bbox_list:
             # Add += 1 for all pixels inside each bbox
-            # Assuming each "box" takes the form ((x1, y1), (x2, y2))
+            # Assuming each "box" takes the form ((x1, y1, x2, y2))
             heatmap[box[1]:box[3], box[0]:box[2]] += 1
-
         # Return updated heatmap
+        heatmap[heatmap < threshold] = 0
         return heatmap  # Iterate through list of bboxes
-
-    def label_cars(self, heatmap, threshold=0):
-        # Zero out pixels below the threshold
-        heatmap[heatmap <= threshold] = 0
-        labels, n_cars = label(heatmap)
-        return labels, n_cars
 
     def draw_labeled_bboxes(self, img, labels, n_cars):
         # Iterate through all detected cars
@@ -172,14 +169,13 @@ class ObjectDetector:
 
     def process_image(self, image):
         
-        heatmap_threshold = 0
         draw_img = np.copy(image)
         bboxes, _ = self.detect(image)
         
         heatmap = np.zeros_like(image[:, :, 0]).astype(np.float)
         heatmap = self.add_heat(heatmap, bboxes)
 
-        labels, n_cars = self.label_cars(heatmap, threshold=heatmap_threshold)
+        labels, n_cars = label(heatmap)
         boxes_img = self.draw_labeled_bboxes(draw_img, labels, n_cars)
         blended_image = self.blend_heatmap(boxes_img, heatmap)
 
@@ -188,3 +184,21 @@ class ObjectDetector:
     def process_frame(self, image):
         if not self.is_stream:
             return self.process_image(image)
+        self.count += 1
+        
+        heatmap_threshold = 1
+        image = image_utils.convert_color(image, 'RGB2BGR')
+            
+        draw_img = np.copy(image)
+        bboxes, _ = self.detect(image)
+
+        heatmap = np.zeros_like(image[:, :, 0]).astype(np.float)
+        heatmap = self.add_heat(heatmap, bboxes, threshold=3)
+        self.last_5_heatmaps.append(heatmap)
+        heatmap = np.mean(np.array(self.last_5_heatmaps), axis=0)
+
+        labels, n_cars = label(heatmap)
+        boxes_img = self.draw_labeled_bboxes(draw_img, labels, n_cars)
+        blended_image = self.blend_heatmap(boxes_img, heatmap)
+        
+        return image_utils.convert_color(blended_image, 'BGR2RGB')
