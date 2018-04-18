@@ -119,7 +119,7 @@ Once a binary image is obtained with the lane lines isolated, we need to obtain 
 
 Example images of lane extraction process:
 
-|  Warped Image     |   Binary Image        | Histogram of white pixels| Line Fit            |   
+|  Warped Image     |   Binary Image        | Histogram of white pixels| Line Fit            |
 |:-------------------:|:-------------------:|:--------------------:|:-----------------------:|
 | ![Lane1C][lane-1-c] | ![Lane1B][lane-1-b] |  ![Lane1H][lane-1-h] | ![Lane1D][lane-1-d] |
 | ![Lane1C][lane-2-c] | ![Lane1B][lane-2-b] |  ![Lane1H][lane-2-h] | ![Lane1D][lane-2-d] |

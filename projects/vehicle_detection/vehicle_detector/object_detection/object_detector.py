@@ -20,6 +20,7 @@ class ObjectDetector:
         self.extract_color_hist = color_hist  # Boolean, extract colot histogram if true
         self.hog_cspace = hog_cspace  # Color space to use for HOG features
         # ystart & ystop defines the portion of the image used for scanning for cars
+        self.xstart = xstart
         self.ystart = ystart
         self.ystop = ystop
         self.window_dim = window_dim
@@ -56,7 +57,7 @@ class ObjectDetector:
         if not self.ystop:
             self.ystop = image.shape[0]
 
-        img_tosearch = image[self.ystart:self.ystop, :, :]
+        img_tosearch = image[self.ystart:self.ystop, self.xstart:, :]
 
         ctrans_tosearch = img_tosearch
         if self.hog_cspace != 'BGR':
@@ -117,8 +118,8 @@ class ObjectDetector:
                     xbox_left = np.int(xleft * scale)
                     ytop_draw = np.int(ytop * scale)
                     win_draw = np.int(window * scale)
-                    boxes.append((xbox_left, ytop_draw + self.ystart,
-                                  xbox_left + win_draw, ytop_draw + win_draw + self.ystart))
+                    boxes.append((xbox_left + self.xstart, ytop_draw + self.ystart,
+                                  xbox_left + self.xstart + win_draw, ytop_draw + win_draw + self.ystart))
                     probs.append(probability)
         return boxes, probs
 
