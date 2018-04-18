@@ -1,0 +1,178 @@
+[
+    {
+      "C": 10,
+      "hog_color_space": "BGR2HSV",
+      "color_hist": true,
+      "pixels_per_cell": [
+        8,
+        8
+      ],
+      "orientations": 10,
+      "cells_per_block": [
+        4,
+        4
+      ],
+      "gamma": "auto",
+      "accuracy": 99.199
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR2YCrCb",
+      "color_hist": true,
+      "pixels_per_cell": [
+        16,
+        16
+      ],
+      "orientations": 12,
+      "cells_per_block": [
+        4,
+        4
+      ],
+      "gamma": "auto",
+      "accuracy": 99.545
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR2YCrCb",
+      "color_hist": true,
+      "pixels_per_cell": [
+        8,
+        8
+      ],
+      "orientations": 10,
+      "cells_per_block": [
+        4,
+        4
+      ],
+      "gamma": "auto",
+      "accuracy": 99.272
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR2HSV",
+      "color_hist": false,
+      "pixels_per_cell": [
+        16,
+        16
+      ],
+      "orientations": 10,
+      "cells_per_block": [
+        2,
+        2
+      ],
+      "gamma": "auto",
+      "accuracy": 98.854
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR2YCrCb",
+      "color_hist": true,
+      "pixels_per_cell": [
+        16,
+        16
+      ],
+      "orientations": 9,
+      "cells_per_block": [
+        4,
+        4
+      ],
+      "gamma": "auto",
+      "accuracy": 99.691
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR",
+      "color_hist": true,
+      "pixels_per_cell": [
+        8,
+        8
+      ],
+      "orientations": 9,
+      "cells_per_block": [
+        4,
+        4
+      ],
+      "gamma": "auto",
+      "accuracy": 98.581
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR2YCrCb",
+      "color_hist": true,
+      "pixels_per_cell": [
+        16,
+        16
+      ],
+      "orientations": 10,
+      "cells_per_block": [
+        4,
+        4
+      ],
+      "gamma": "auto",
+      "accuracy": 99.582
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR2YCrCb",
+      "color_hist": false,
+      "pixels_per_cell": [
+        16,
+        16
+      ],
+      "orientations": 9,
+      "cells_per_block": [
+        2,
+        2
+      ],
+      "gamma": "auto",
+      "accuracy": 99.036
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR2HSV",
+      "color_hist": true,
+      "pixels_per_cell": [
+        16,
+        16
+      ],
+      "orientations": 12,
+      "cells_per_block": [
+        2,
+        2
+      ],
+      "gamma": "auto",
+      "accuracy": 99.254
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR",
+      "color_hist": true,
+      "pixels_per_cell": [
+        16,
+        16
+      ],
+      "orientations": 10,
+      "cells_per_block": [
+        4,
+        4
+      ],
+      "gamma": "auto",
+      "accuracy": 99.145
+    },
+    {
+      "C": 10,
+      "hog_color_space": "BGR2YCrCb",
+      "color_hist": true,
+      "pixels_per_cell": [
+        8,
+        8
+      ],
+      "orientations": 9,
+      "cells_per_block": [
+        2,
+        2
+      ],
+      "gamma": "auto",
+      "accuracy": 99.108
+    }
+  ]

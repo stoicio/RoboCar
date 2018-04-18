@@ -32,9 +32,7 @@ class ObjectDetector:
 
         # Are we processing a video sequence
         self.is_stream = is_stream
-        self.weights = [0.1, 0.2, 0.4, 0.6, 0.8]
-        self.last_5_heatmaps = deque(maxlen=24)
-        self.count = 0
+        self.heatmaps_history = deque(maxlen=24)
 
     def detect(self, image, scales=[1., 1.1, 1.25, 1.5, 1.75, 2.0]):
         boxes = []
@@ -185,7 +183,6 @@ class ObjectDetector:
     def process_frame(self, image):
         if not self.is_stream:
             return self.process_image(image)
-        self.count += 1
         
         heatmap_threshold = 1
         image = image_utils.convert_color(image, 'RGB2BGR')
@@ -195,8 +192,8 @@ class ObjectDetector:
 
         heatmap = np.zeros_like(image[:, :, 0]).astype(np.float)
         heatmap = self.add_heat(heatmap, bboxes, threshold=3)
-        self.last_5_heatmaps.append(heatmap)
-        heatmap = np.mean(np.array(self.last_5_heatmaps), axis=0)
+        self.heatmaps_history.append(heatmap)
+        heatmap = np.mean(np.array(self.heatmaps_history), axis=0)
 
         labels, n_cars = label(heatmap)
         boxes_img = self.draw_labeled_bboxes(draw_img, labels, n_cars)
