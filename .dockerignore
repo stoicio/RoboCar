@@ -3,9 +3,9 @@
 **/*.zip
 **/*.p
 **/*.npy
-data/
-models
-bottleneck_data/
+**/data/
+**/models
+**/bottleneck_data/
 
 
 # Git
@@ -14,7 +14,7 @@ bottleneck_data/
 
 
 # Byte-compiled / optimized / DLL files
-__pycache__/
+**/__pycache__/
 */__pycache__/
 */*/__pycache__/
 */*/*/__pycache__/
