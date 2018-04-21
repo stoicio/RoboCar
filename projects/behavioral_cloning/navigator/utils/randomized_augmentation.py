@@ -12,6 +12,33 @@ def h_flip(image, steering_angle):
     return image, steering_angle
 
 
+def random_translate(image, steering_angle, x_shift_max=60, y_shift_max=10):
+    '''Randomly shift an image vertically and horizontally. Adjust steering angle,
+    relative to horizontal shift'''
+    h_shift = x_shift_max * (np.random.rand() - 0.5)
+    v_shift = y_shift_max * (np.random.rand() - 0.5)
+    steering_angle += h_shift * 0.002
+    trans_m = np.float32([[1, 0, h_shift], [0, 1, v_shift]])
+    height, width = image.shape[:2]
+    image = cv2.warpAffine(image, trans_m, (width, height))
+    return image, steering_angle
+
+
+def random_shadow(image, steering_angle):
+    '''Add Random shadow to one half of the image'''
+    dark_image = np.copy(image)
+    if np.random.choice([0, 1]) == 1:
+        startx = 0
+        stopx = np.int(image.shape[1] / 2)
+    else:
+        startx = np.int(image.shape[1] / 2)
+        stopx = image.shape[1]
+
+    shadow_img, _ = random_gamma_adjust(dark_image, steering_angle, gamma_range=[0.3, 0.4, 0.5, 0.6])
+    dark_image[:, startx:stopx] = shadow_img[:, startx:stopx]
+    return dark_image, steering_angle
+
+
 def steering_correction(cam_position, curr_angle, recovery_distance=10.0, cam_offset=1.0):
     '''
     Given a steering angle and a target camera_position (left or right), correct the
@@ -67,7 +94,7 @@ def remove_zero_angle_logs(img_paths, steering_angles, retention_rate=0.1):
     return img_paths, steering_angles
 
 
-def random_gamma_adjust(image, steering_angle, gamma_range=[0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75,
+def random_gamma_adjust(image, steering_angle, gamma_range=[0.3, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75,
                                                             2.0]):
     '''
     Given an image array, adjust its brightness by choosing a value from a range'''
@@ -81,5 +108,7 @@ def read_and_augument_image(image_path, steering_angle, model_input_size=(160, 3
     # Read in the image to memory
     image = cv2.imread(image_path)
     image, steering_angle = random_gamma_adjust(image, steering_angle)
+    image, steering_angle = random_translate(image, steering_angle)
+    image, steering_angle = random_shadow(image, steering_angle)
     image, steering_angle = h_flip(image, steering_angle)
     return image, steering_angle

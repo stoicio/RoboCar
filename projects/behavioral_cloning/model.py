@@ -9,9 +9,11 @@ from sklearn.utils import shuffle
 
 from navigator.utils import dataset, models
 
-BATCHES_PER_EPOCH = 75
-BATCH_SIZE = 64
+SAMPLES_PER_EPOCH = 20000
+BATCH_SIZE = 128
+BATCHES_PER_EPOCH = SAMPLES_PER_EPOCH // BATCH_SIZE
 NUM_EPOCHS = 20
+
 logging.basicConfig(level='INFO')
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,7 @@ if __name__ == '__main__':
     stop_early = EarlyStopping(monitor='val_loss', min_delta=0.003, patience=2, verbose=2, mode='min')
 
     if model_name == 'nvidia':
-        model, input_shape = models.get_nvidia_model(dropout_prob=0.4, learning_rate=1e-3)
+        model, input_shape = models.get_nvidia_model(dropout_prob=0.4, learning_rate=1e-4)
 
     training_data = dataset.batch_generator(X_train, y_train, input_shape,
                                             zero_angle_retention_rate=0.05)

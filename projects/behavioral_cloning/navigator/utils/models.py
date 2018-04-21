@@ -14,23 +14,27 @@ def get_nvidia_model(dropout_prob=None, learning_rate=0.001, regularize_val=0.00
 
     # starts with five convolutional and maxpooling layers
     model.add(Conv2D(24, (5, 5), padding='valid', strides=(2, 2),
-                     activation='relu'))  # , kernel_regularizer=regularizers.l2(0.01)))
+                     activation='relu', kernel_regularizer=regularizers.l2(0.001)))
     model.add(Conv2D(36, (5, 5), padding='valid', strides=(2, 2),
-                     activation='relu'))  #, kernel_regularizer=regularizers.l2(0.01)))
+                     activation='relu', kernel_regularizer=regularizers.l2(0.001)))
     model.add(Conv2D(48, (5, 5), padding='valid', strides=(2, 2),
-                     activation='relu'))  #, kernel_regularizer=regularizers.l2(0.01)))
+                     activation='relu', kernel_regularizer=regularizers.l2(0.001)))
+
+    # if dropout_prob:
+    #     model.add(Dropout(dropout_prob))  # Fraction of the input units to drop
+
     model.add(Conv2D(64, (3, 3), padding='valid', strides=(1, 1),
-                     activation='relu'))  #, kernel_regularizer=regularizers.l2(0.01)))
+                     activation='relu', kernel_regularizer=regularizers.l2(0.001)))
     model.add(Conv2D(64, (3, 3), padding='valid', strides=(1, 1),
-                     activation='relu'))  #, kernel_regularizer=regularizers.l2(0.01)))
-    if dropout_prob:
-        model.add(Dropout(dropout_prob))  # Fraction of the input units to drop
+                     activation='relu', kernel_regularizer=regularizers.l2(0.001)))
+    # if dropout_prob:
+    #     model.add(Dropout(dropout_prob))  # Fraction of the input units to drop
 
     model.add(Flatten())
     # Next, five fully connected layers
-    model.add(Dense(100, activation='relu')) #, kernel_regularizer=regularizers.l2(0.01)))
-    model.add(Dense(50, activation='relu',)) # kernel_regularizer=regularizers.l2(0.01)))
-    model.add(Dense(10, activation='relu',)) # kernel_regularizer=regularizers.l2(0.01)))
+    model.add(Dense(100, activation='relu', kernel_regularizer=regularizers.l2(0.001)))
+    model.add(Dense(50, activation='relu', kernel_regularizer=regularizers.l2(0.001)))
+    model.add(Dense(10, activation='relu', kernel_regularizer=regularizers.l2(0.001)))
     model.add(Dense(1))
     model.summary()
 
