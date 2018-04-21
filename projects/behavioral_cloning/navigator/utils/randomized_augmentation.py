@@ -12,7 +12,7 @@ def h_flip(image, steering_angle):
     return image, steering_angle
 
 
-def steering_correction(cam_position, curr_angle, recovery_distance=4.0, cam_offset=1.0):
+def steering_correction(cam_position, curr_angle, recovery_distance=10.0, cam_offset=1.0):
     '''
     Given a steering angle and a target camera_position (left or right), correct the
     given steering angle to account for the camera offset.

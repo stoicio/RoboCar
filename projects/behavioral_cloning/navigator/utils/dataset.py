@@ -19,15 +19,30 @@ def prep_image_for_model(image, model_image_size, y_start=80, y_end=135, colorsp
     return image
 
 
-def batch_generator(image_paths, steering_angles, model_image_size, batch_size=128,
+def draw_steering_angle(image, raw_angle):
+    center_point = (np.int(image.shape[1] / 2), image.shape[0])
+    end_point = (np.int(center_point[0] + center_point[0] * raw_angle), np.int(image.shape[0] / 2))
+    cv2.line(image, center_point, end_point, (255, 255, 0), thickness=2)
+    return image
+
+
+def draw_angle_and_save(image, raw_angle, file_path):
+    image = cv2.cvtColor(image, cv2.COLOR_YUV2BGR)
+    image = draw_steering_angle(image, raw_angle)
+    cv2.imwrite(file_path, image)
+
+
+def batch_generator(image_paths, steering_angles, model_image_size, 
+                    zero_angle_retention_rate=0.05, batch_size=128,
                     training=True):
 
     def init_dataset():
         if training:
             X_pre, y_pre = shuffle(image_paths, steering_angles)
-            X_pre, y_pre = remove_zero_angle_logs(X_pre, y_pre)
+            X_pre, y_pre = remove_zero_angle_logs(X_pre, y_pre,
+                                                  retention_rate=zero_angle_retention_rate)
         else:
-            X_pre, y_pre = image_paths, steering_angles
+            X_pre, y_pre = shuffle(image_paths, steering_angles)
         return X_pre, y_pre
 
     # Have an offset to start over from intial data set if we run out of image during
