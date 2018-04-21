@@ -8,7 +8,7 @@ The goal of this project was to build Neural Network model that would be used to
 
 1. `model.h5` - Trained weights
 2. `navigator` module - which contains all the helper files
-3. `model.py` which is the glue code that ties all the helper functions together and trains the module.
+3. `train.py` which is the glue code that ties all the helper functions together and trains the module.
 4. `drive.py` Used along with the `model.h5` to predict the steering angles for images incoming from the simulator.
 5. `output_video.mp4` a screen grab of the car being driven autonomously in the simulator using the trained model and the weights.
 5. `output_video_reverse.mp4` a screen grab of the car being driven autonomously in the simulator's track 1 in the opposite direction.
@@ -130,7 +130,7 @@ Translation    | ![Translate][Translate]                    |
 **All Mixed**    | ![Together][Together]                    |
 **ModelInput**    | ![ModelInput][ModelInput]                    |
 
-#### Training Startegy [Code](./model.py):
+#### Training Startegy [Code](./train.py):
 
 Some important aspects implemented to optimize training & speed up iterations
 

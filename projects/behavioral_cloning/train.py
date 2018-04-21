@@ -13,6 +13,8 @@ SAMPLES_PER_EPOCH = 20000
 BATCH_SIZE = 128
 BATCHES_PER_EPOCH = SAMPLES_PER_EPOCH // BATCH_SIZE
 NUM_EPOCHS = 20
+LEARNING_RATE = 0.005
+DROPOUT_RATE = 0.4
 
 logging.basicConfig(level='INFO')
 logger = logging.getLogger(__name__)
@@ -47,8 +49,8 @@ if __name__ == '__main__':
     
     # Load Image Path from CSV
     df = pandas.read_csv(driving_log)
-    image_path_resolver = lambda x: os.path.join(base_data_dir, x['center'].strip())  # flake8: noqa
-    df['center'] = df.apply(image_path_resolver, axis=1)
+    # image_path_resolver = lambda x: os.path.join(base_data_dir, x['center'].strip())  # flake8: noqa
+    # df['center'] = df.apply(image_path_resolver, axis=1)
 
     all_x, all_y = shuffle(df.center.values, df.steering.values)
 
@@ -62,11 +64,22 @@ if __name__ == '__main__':
     stop_early = EarlyStopping(monitor='val_loss', min_delta=0.003, patience=2, verbose=2, mode='min')
 
     if model_name == 'nvidia':
-        model, input_shape = models.get_nvidia_model(dropout_prob=0.4, learning_rate=1e-4)
+        model, input_shape = models.get_nvidia_model(dropout_prob=DROPOUT_RATE,
+                                                     learning_rate=LEARNING_RATE)
 
     training_data = dataset.batch_generator(X_train, y_train, input_shape,
                                             zero_angle_retention_rate=0.05)
     validation_data = dataset.batch_generator(X_val, y_val, input_shape, training=False)
+    
+    logger.info('          Training Parameters         ')
+    logger.info('======================================')
+    logger.info('Batch size        : %d', BATCH_SIZE)
+    logger.info('Samples per epoch : %d', SAMPLES_PER_EPOCH)
+    logger.info('Training b/epoch  : %d', BATCHES_PER_EPOCH)
+    logger.info('Validation b/epoch: %d', num_validation_steps)
+    logger.info('Total Epochs      : %d', NUM_EPOCHS)
+    logger.info('Learning rate     : %f', LEARNING_RATE)
+    logger.info('Dropout rate      : %f', DROPOUT_RATE)
     
     model.fit_generator(training_data, steps_per_epoch=BATCHES_PER_EPOCH, 
                         epochs=NUM_EPOCHS, verbose=2, validation_data=validation_data,
