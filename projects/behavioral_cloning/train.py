@@ -1,6 +1,7 @@
 import argparse
 from time import gmtime, strftime
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
+import logging
 import os
 import pandas
 from sklearn.model_selection import train_test_split
@@ -9,14 +10,17 @@ from sklearn.utils import shuffle
 from navigator.utils import dataset, models
 
 BATCHES_PER_EPOCH = 75
-BATCH_SIZE = 128
-NUM_EPOCHS = 8
+BATCH_SIZE = 64
+NUM_EPOCHS = 20
+logging.basicConfig(level='INFO')
+logger = logging.getLogger(__name__)
 
 def get_save_path(base_data_dir):
     folder_name = strftime('%Y-%m-%d-%H-%M-%S', gmtime())
     folder_path = os.path.join(base_data_dir, folder_name)
     os.makedirs(folder_path)
-    return os.path.join(folder_path, 'model.{epoch:02d}-{val_loss:.2f}')
+    logger.info('Saving models to %s', folder_path)
+    return os.path.join(folder_path, 'model.{epoch:02d}-{val_loss:.3f}')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Steering Model')
@@ -53,8 +57,10 @@ if __name__ == '__main__':
     model_save_paths = get_save_path(base_data_dir)
     save_all_epochs = ModelCheckpoint(model_save_paths, monitor='val_loss',
                                       save_best_only=False, )
+    stop_early = EarlyStopping(monitor='val_loss', min_delta=0.003, patience=2, verbose=2, mode='min')
+
     if model_name == 'nvidia':
-        model, input_shape = models.get_nvidia_model(dropout_prob=0.4)
+        model, input_shape = models.get_nvidia_model(dropout_prob=0.4, learning_rate=1e-3)
 
     training_data = dataset.batch_generator(X_train, y_train, input_shape,
                                             zero_angle_retention_rate=0.05)
@@ -62,4 +68,4 @@ if __name__ == '__main__':
     
     model.fit_generator(training_data, steps_per_epoch=BATCHES_PER_EPOCH, 
                         epochs=NUM_EPOCHS, verbose=2, validation_data=validation_data,
-                        validation_steps=num_validation_steps, callbacks= [save_all_epochs])
+                        validation_steps=num_validation_steps, callbacks= [save_all_epochs,stop_early])

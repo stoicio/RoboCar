@@ -6,7 +6,7 @@ from sklearn.utils import shuffle
 from . import image_utils, read_and_augument_image, remove_zero_angle_logs
 
 
-def prep_image_for_model(image, model_image_size, y_start=80, y_end=135, colorspace='BGR2YUV'):
+def prep_image_for_model(image, model_image_size, y_start=50, y_end=140, colorspace='BGR2YUV'):
     # Crop image to ROI
     image = image[y_start:y_end, :, :]
 
