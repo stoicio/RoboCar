@@ -1,3 +1,4 @@
+# flake8: noqa
 import argparse
 import base64
 from datetime import datetime
@@ -23,7 +24,6 @@ app = Flask(__name__)
 model = None
 prev_image_array = None
 
-
 class SimplePIController:
     def __init__(self, Kp, Ki):
         self.Kp = Kp
@@ -46,9 +46,9 @@ class SimplePIController:
 
 
 controller = SimplePIController(0.1, 0.002)
-set_speed = 20
+set_speed = 9
 controller.set_desired(set_speed)
-
+count = 0
 
 def prep_for_model(image):
     img = dataset.prep_image_for_model(image, (66, 200, 3), colorspace='RGB2YUV')
@@ -57,6 +57,9 @@ def prep_for_model(image):
 
 @sio.on('telemetry')
 def telemetry(sid, data):
+
+    global count  # used to save one out of 10 frames
+
     if data:
         # The current steering angle of the car
         steering_angle = data["steering_angle"]
@@ -71,17 +74,22 @@ def telemetry(sid, data):
 
         in_image = prep_for_model(image_array)
         steering_angle = float(model.predict(in_image, batch_size=1))
-
+        
         throttle = controller.update(float(speed))
 
         print(steering_angle, throttle)
         send_control(steering_angle, throttle)
-
+        count += 1
         # save frame
-        if args.image_folder != '':
+        if args.image_folder != '' and count == 10: # Save only one in 10 frames
+            count = 0
+
             timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
             image_filename = os.path.join(args.image_folder, timestamp)
-            image.save('{}.jpg'.format(image_filename))
+
+            dataset.draw_angle_and_save(in_image[0], steering_angle,
+                                        '{}.jpg'.format(image_filename))
+            # image.save('{}.jpg'.format(image_filename))
     else:
         # NOTE: DON'T EDIT THIS.
         sio.emit('manual', data={}, skip_sid=True)
@@ -110,6 +118,9 @@ if __name__ == '__main__':
         type=str,
         help='Path to model h5 file. Model should be on the same path.'
     )
+    parser.add_argument('-s', '--speed', type=int, default=20, 
+                        help='Set max speed to use in autonomous mode')
+
     parser.add_argument(
         'image_folder',
         type=str,
@@ -117,7 +128,11 @@ if __name__ == '__main__':
         default='',
         help='Path to image folder. This is where the images from the run will be saved.'
     )
+
     args = parser.parse_args()
+
+    # Adjust max speed 
+    controller.set_desired(args.speed)
 
     # check that model Keras version is same as local Keras version
     f = h5py.File(args.model, mode='r')
