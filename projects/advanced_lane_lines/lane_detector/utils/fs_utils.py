@@ -34,7 +34,7 @@ def download_file(url, download_to_dir, delete_old=False):
 
 def extract_zip(filepath, extract_to_dir):
     '''
-    Given a zip file path & a target directory extracts the zip contents 
+    Given a zip file path & a target directory extracts the zip contents
     into the target directory
     Args:
      filepath (str) : Local path to the zipfile

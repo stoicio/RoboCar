@@ -9,23 +9,45 @@ import cv2
 from moviepy.editor import VideoFileClip
 from vehicle_detector.descriptors import HOG
 from vehicle_detector.object_detection import ObjectDetector
+from vehicle_detector.utils import fs_utils
+
 
 logging.basicConfig(level='INFO')
 logger = logging.getLogger('VehicleDetector')
 
+DATA_ZIP = 'https://s3-us-west-1.amazonaws.com/carnd-data/advanced_lane_lines_data.zip'
+TEST_DATA_ZIP = './data/advanced_lane_lines_data.zip'
 
-MODEL_PARAMS = '../data/picked_model.json'
+BASE_DATA_DIR = './data/'
+MODEL_PARAMS = './model/model_params.json'
+
 
 # TEST IMAGES PATH
-TEST_IMAGES_DIR = os.path.join('../test_images/')
-OUTPUT_IMAGES_DIR = os.path.join('../output_images/')
+TEST_IMAGES_DIR = os.path.join(BASE_DATA_DIR, 'test_images/')
+OUTPUT_IMAGES_DIR = os.path.join(BASE_DATA_DIR, 'output_images/')
 
 # VIDEO CLIP PATH
-PROJECT_VIDEO = os.path.join('../project_video.mp4')
-PROJECT_VIDEO_OUTPUT_DIR = os.path.join('../output_videos/')
+PROJECT_VIDEO = os.path.join(BASE_DATA_DIR, 'project_video.mp4')
+PROJECT_VIDEO_OUTPUT_DIR = os.path.join(BASE_DATA_DIR, 'output_videos/')
 
 
 def init_detector(is_stream=False):
+
+    try:
+        if not os.path.exists(TEST_DATA_ZIP):
+            fs_utils.download_file(DATA_ZIP, BASE_DATA_DIR)
+            fs_utils.extract_zip(TEST_DATA_ZIP, BASE_DATA_DIR)
+    except Exception:
+        # Clean up partial files
+        if os.path.exists(TEST_DATA_ZIP):
+            os.remove(TEST_DATA_ZIP)
+        raise
+
+    if not os.path.exists(OUTPUT_IMAGES_DIR):
+        os.makedirs(OUTPUT_IMAGES_DIR)
+
+    if not os.path.exists(PROJECT_VIDEO_OUTPUT_DIR):
+        os.makedirs(PROJECT_VIDEO_OUTPUT_DIR)
 
     # Load the picked model params
     with open(MODEL_PARAMS, 'r') as fp:
@@ -34,6 +56,7 @@ def init_detector(is_stream=False):
     # Load the pickled Feature Scaler
     with open(params['scaler_file_path'], 'rb') as fp:
         scaler = pickle.loads(fp.read())
+
     # Load the pickled SVM Model
     with open(params['file_path'], 'rb') as fp:
         clf = pickle.loads(fp.read())

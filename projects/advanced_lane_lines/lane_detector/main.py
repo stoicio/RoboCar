@@ -1,9 +1,9 @@
+import os
+import sys
+
 import cv2
 import matplotlib.image as mpimg
 from moviepy.editor import VideoFileClip
-
-import os
-import sys
 
 from .utils import CameraCalibration, LaneDetector, PerspectiveTransformation
 from .utils import fs_utils
@@ -30,7 +30,7 @@ PROJECT_VIDEO_OUTPUT_DIR = os.path.join(BASE_DOWNLOAD_DIR, 'output_videos/')
 
 
 def init_data():
-    ''' 
+    '''
     Initializes data required for the project.
     1. Downloads test data. 2. Runs camera calibration & Returns calibration object
     '''
@@ -61,7 +61,7 @@ def init_data():
 
 def process_pictures():
 
-    cc = init_data()    
+    cc = init_data()
     mtx, dist = cc.get_camera_params()
     pp = PerspectiveTransformation()
     detector = LaneDetector(cc, pp, process_stream=False)
@@ -97,6 +97,7 @@ def main(argv):
         process_pictures()
     if argv[1] == 'video':
         process_video()
+
 
 if __name__ == '__main__':
     main(sys.argv)

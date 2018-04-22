@@ -1,0 +1,12 @@
+{
+    "pixels_per_cell": [16, 16], 
+    "hog_color_space": "BGR2YCrCb", 
+    "gamma": "auto", 
+    "orientations": 12, 
+    "cells_per_block": [4, 4], 
+    "color_hist": true, 
+    "C": 10,
+    "accuracy": 99.573, 
+    "scaler_file_path": "../data/models/unfiltered_A_99.5_C_10_gamma_auto_CH_True_O_12_P_(16, 16)_C_(4, 4)_CS_BGR2YCrCb_scaler.cpickle",
+    "file_path": "../data/models/unfiltered_A_99.5_C_10_gamma_auto_CH_True_O_12_P_(16, 16)_C_(4, 4)_CS_BGR2YCrCb.cpickle", "name": "unfiltered_A_99.5_C_10_gamma_auto_CH_True_O_12_P_(16, 16)_C_(4, 4)_CS_BGR2YCrCb.cpickle"
+}
