@@ -118,7 +118,8 @@ The SVM model was trained in two phases.
 
 1. Models were trained using different combinations of feature sets (extracted from 2000 random samples of each class) & different parameters for the SVM using GridSearch. Each model's accuracy was also calculated. These parameters can be found in this [JSON File](./docs/parameter_combinations.json)
 2. In Phase 2, the top 10 models were chosen from the previous experiment & were retrained on the full dataset with the parameters obtained above. The relative stats between these paramters are shown below. (all values were normalized to a scale of 1 to 10 for easier interpretation) [JSON FILE](./docs/top_models.json)
-    ![Top10Models][Top10Models]
+
+![Top10Models][Top10Models]
 
 Hog_Color_Space | Color_Hist | Pixels_Per_Cell | Orientations | Cells_Per_Block | Gamma | Accuracy |
 --------------- | ---------- | --------------- | ------------ | --------------- | ----- | -------- |
