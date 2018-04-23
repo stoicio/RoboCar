@@ -2,7 +2,7 @@
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
 #### Enviroment Setup:
-* Install [docker](www.docker.com) & [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)
+* Install [docker](https://docs.docker.com/) & [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)
 * Build the docker container with GPU Support by running the following command
     `docker build -f dockerfiles/carnd.udacity.gpu -t carnd:gpu .`
 * Start the container using the following command
